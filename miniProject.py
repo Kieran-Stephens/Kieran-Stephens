@@ -1,6 +1,14 @@
 import inflect
 import csv
-import ast 
+import ast
+import mysql.connector
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="password",
+  database="test"
+)
+mycursor = mydb.cursor()
 p = inflect.engine()
 with open('courriers.csv') as f:
     a = [{k: v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
@@ -60,134 +68,100 @@ def UpdateOrder():
     dict_writer.writerows(a)
 
 def DeleteOrder():    
-    if choice == "1":
-        f=input("What is the customer name of the order you want to delete? ")
-        c = input(f"What is {f}'s phone number ? ")
-        for n in range(len(a)):
-            if a[n]['customer_name']==str(f):
-                    if a[n]['customer_phone'] == c:
-                        a.remove(a[n])
-                        break
     
-        if a != []:
-            keys = a[0].keys()
-            a_file = open("orders.csv", "w")
-            dict_writer = csv.DictWriter(a_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(a)
-        else:
-            a_file = open("orders.csv", "w")
-            writer = csv.writer(a_file)
-            row = ["customer_name","customer_address","customer_phone","courier","status","items"]
-            writer.writerow(row)
+    f=input("What is the customer name of the order you want to delete? ")
+    c = input(f"What is {f}'s phone number ? ")
+    for n in range(len(a)):
+        if a[n]['customer_name']==str(f):
+                if a[n]['customer_phone'] == c:
+                    a.remove(a[n])
+                    break
+
+    if a != []:
+        keys = a[0].keys()
+        a_file = open("orders.csv", "w")
+        dict_writer = csv.DictWriter(a_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(a)
+    else:
+        a_file = open("orders.csv", "w")
+        writer = csv.writer(a_file)
+        row = ["customer_name","customer_address","customer_phone","courier","status","items"]
+        writer.writerow(row)
     
     
     
 def NewProduct():
     
         
-    e = input("Name of Product? ")
-    b = input(f"Price of {e}? ")
-        
-    update = {"name": e,  "price": b}
-    a.append(update)
-    print(a)
-    keys = a[0].keys()
-    a_file = open("products.csv", "w")
-    dict_writer = csv.DictWriter(a_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(a)
+    a=input("Name of Product? ")
+    b = input(f"{a}'s price? (Please include £ sign and 2 decimal points) ")
+
+    sql = "INSERT INTO products (name,price) VALUES (%s,%s)"
+    val = (a,b)
+    mycursor.execute(sql,val)
+    mydb.commit()
+    print(f"New product with name {a} inserted.")
 
 def UpdateProduct():
     
     repeat = "Y"
-    
-    f=input("What is the name of the Product you want to update? ")
+    f=input("What is the id of the product you want to update? ")
     while repeat == "Y":
         b=input("what do you want to update? (name or price) ")
         e=input("What do you want to update it with? ")
-        for n in range(len(a)):
-            if a[n]['name']==str(f):
-                a[n][b]=str(e)
-        repeat = input("Would you like to change another area in the order? (Y/N with capitals) ")
-    print(a)
-    keys = a[0].keys()
-    a_file = open("products.csv", "wb")
-    dict_writer = csv.DictWriter(a_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(a)
+        sql = f"UPDATE products SET {b} = '{e}' WHERE id = {f}"
+        mycursor.execute(sql)
+        mydb.commit()
+        print(f"Product with id {f} has been updated with {b} {e}")
+        repeat = input("Would you like to change another area in the product? (Y/N with capitals) ")
     
 def DeleteProduct():
     
-    x=input("What is the name of the product you want to delete? ")
-    for n in range(len(a)):
-        if a[n]['name']==str(x):
-            a.remove(a[n])
-            break
-    print(a)
-    if a != []:
-        keys = a[0].keys()
-        a_file = open("products.csv", "w")
-        dict_writer = csv.DictWriter(a_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(a)
-    else:
-        a_file = open("products.csv", "wb")
-        writer = csv.writer(a_file)
-        row = ["name","price"]
-        writer.writerow(row)
+    val=int(input("What is the id of the product you want to delete? "),)
+    sql = "DELETE FROM products WHERE id = {}".format(val)
+    mycursor.execute(sql)
+
+    mydb.commit()
+
+    print(f"Product with id {val} has been deleted")
     
 def NewCourrier():
     
-        
-    e = input("Name of Courrier? ")
-    b = input(f"{e}'s number? ")
-    
-    update = {"name": e,  "price": b}
-    a.append(update)
-    print(a)
-    keys = a[0].keys()
-    a_file = open("courriers.csv", "w")
-    dict_writer = csv.DictWriter(a_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(a)
+    a=input("Name of Courrier? ")
+    b = input(f"{a}'s number? ")
+
+    sql = "INSERT INTO courriers (name,phone) VALUES (%s,%s)"
+    val = (a,b)
+    mycursor.execute(sql,val)
+    mydb.commit()
+    print(f"New courrier with name {a} inserted.")
         
 def UpdateCourrier():
-        repeat = "Y"
+    repeat = "Y"
+    f=input("What is the id of the Courriers you want to update? ")
+    while repeat == "Y":
+        b=input("what do you want to update? (name or number) ")
+        e=input("What do you want to update it with? ")
+        sql = f"UPDATE courriers SET {b} = '{e}' WHERE id = {f}"
+        mycursor.execute(sql)
+        mydb.commit()
+        print(f"Courrier with id {f} has been updated with {b} {e}")
+        repeat = input("Would you like to change another area in the order? (Y/N with capitals) ")
         
-        f=input("What is the name of the Courriers you want to update? ")
-        while repeat == "Y":
-            b=input("what do you want to update? (name or number) ")
-            e=input("What do you want to update it with? ")
-            for n in range(len(a)):
-                if a[n]['name']==str(f):
-                    a[n][b]=str(e)
-            repeat = input("Would you like to change another area in the order? (Y/N with capitals) ")
         
         
-        keys = a[0].keys()
-        a_file = open("courriers.csv", "wb")
-        dict_writer = csv.DictWriter(a_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(a)
+
 def DeleteCourrier():
-    e=input("What is the name of the Courrier you want to delete? ")
-    for n in range(len(a)):
-        if a[n]['name']==str(e):
-            a.remove(a[n])
-            break
-    print(a)
-    if a != []:
-        keys = a[0].keys()
-        a_file = open("courriers.csv", "wb")
-        dict_writer = csv.DictWriter(a_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(a)
-    else:
-        a_file = open("courriers.csv", "wb")
-        writer = csv.writer(a_file)
-        row = ["name","number"]
-        writer.writerow(row)
+    
+    
+    val=int(input("What is the id of the courrier you want to delete? "),)
+    sql = "DELETE FROM courriers WHERE id = {}".format(val)
+    mycursor.execute(sql)
+
+    mydb.commit()
+
+    print(f"Courrier with id {val} has been deleted")
 
 
 
@@ -222,10 +196,16 @@ def Orders():
 
 def Products():
     
-    a = prdfile
-    
-    for i in a:
-        print(i)
+    sql_select_Query = "select * from products"
+    cursor = mydb.cursor()
+    cursor.execute(sql_select_Query)
+    records = cursor.fetchall()
+    print("Total number of products in table: ", cursor.rowcount,"\n")
+
+    for row in records:
+        print("Id = ", row[0], )
+        print("Name = ", row[1])
+        print("price  = ", row[2],"\n")
     choice=input("choose your option: (1) delete, (2) update, (3)add new product: ")
     if choice=="3":
         NewProduct()
@@ -235,11 +215,18 @@ def Products():
         DeleteProduct()
         
 def Courriers():
-    with open('courriers.csv') as f:
-        a = [{k: v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
+    sql_select_Query = "select * from courriers"
+    cursor = mydb.cursor()
+    cursor.execute(sql_select_Query)
+    # get all records
+    records = cursor.fetchall()
+    print("Total number of courriers in table: ", cursor.rowcount,"\n")
+
+    for row in records:
+        print("Id = ", row[0], )
+        print("Name = ", row[1])
+        print("Number  = ", row[2],"\n")
     
-    for i in a:
-        print(i)
     choice=input("choose your option: (1) delete, (2) update, (3)add new courrier: ")
     if choice=="3":
         NewCourrier()
